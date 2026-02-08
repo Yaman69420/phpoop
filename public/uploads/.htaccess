@@ -1,0 +1,7 @@
+# Voorkom dat bezoekers de bestandenlijst zien
+Options -Indexes
+
+# Extra beveiliging: voorkom uitvoeren van PHP scripts in deze map
+<FilesMatch "\.(php|phtml|php3|php4|php5|pl|py|jsp|asp|html|htm|shtml|sh|cgi)$">
+    Deny from all
+</FilesMatch>

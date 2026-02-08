@@ -1,0 +1,2 @@
+# Blokkeer directe toegang tot classes
+Deny from all

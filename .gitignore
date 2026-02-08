@@ -1,0 +1,70 @@
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE settings
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sublime-*
+
+# Configuration files (Secrets)
+# Deze bevatten wachtwoorden/keys en mogen NIET in git
+admin/config/database.php
+admin/config/google.php
+admin/config/github.php
+
+# Environment files
+.env
+.env.*
+*.env
+
+# Logs
+*.log
+public/_public_php_error.log
+error_log
+
+# Vendor (Composer dependencies)
+vendor/
+composer.lock
+
+# Node modules (mocht je frontend tooling toevoegen)
+node_modules/
+
+# User Uploads
+# Negeer alle bestanden in uploads...
+public/uploads/*
+# ...maar behoud de map zelf en de beveiliging
+!public/uploads/.htaccess
+!public/uploads/index.php
+
+# Database dumps - NOOIT in git!
+*.sql
+*.sql.zip
+*.sql.gz
+*.dump
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Private keys en certificaten
+*.pem
+*.key
+*.crt
+*.p12
+
+# Cache
+cache/
+*.cache
+
+# Temporary files
+tmp/
+temp/

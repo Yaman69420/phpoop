@@ -1,0 +1,23 @@
+# ------------------------------------------------------------
+# Root .htaccess - Route requests to admin or public
+# ------------------------------------------------------------
+
+RewriteEngine On
+
+# Als de request begint met /admin, laat Apache het afhandelen (admin heeft eigen .htaccess)
+RewriteRule ^admin(/.*)?$ - [L]
+
+# Voor alle andere requests: stuur door naar public/index.php
+# Behalve als het een bestaand bestand of map is in public/
+RewriteCond %{REQUEST_URI} !^/admin
+RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -f
+RewriteRule ^(.*)$ public/$1 [L]
+
+RewriteCond %{REQUEST_URI} !^/admin
+RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -d
+RewriteRule ^(.*)$ public/$1 [L]
+
+# Alle andere requests naar public/index.php
+RewriteCond %{REQUEST_URI} !^/admin
+RewriteCond %{REQUEST_URI} !^/public
+RewriteRule ^(.*)$ public/index.php [L]
