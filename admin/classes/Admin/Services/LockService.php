@@ -122,14 +122,20 @@ final class LockService
      */
     public function isExpired(array $lock): bool
     {
+        // 1. Als er geen locked_at is, beschouw als verlopen
         if (empty($lock['locked_at'])) {
             return true;
         }
         
+        // 2. Maak DateTime objecten
+
         $lockedAt = new \DateTime($lock['locked_at']);
         $now = new \DateTime();
+
+        // 3. Bereken verschil in seconden
         $diff = $now->getTimestamp() - $lockedAt->getTimestamp();
         
+        // 4. Vergelijk met timeout (15 min = 900 sec)
         return $diff > (self::LOCK_TIMEOUT_MINUTES * 60);
     }
 

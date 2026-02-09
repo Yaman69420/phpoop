@@ -24,10 +24,17 @@ class StatsModel
     public function getStats(): array
     {
         return [
-            'posts' => $this->count('posts'),
+            'posts' => $this->countPosts(),
             'users' => $this->count('users'),
             'media' => $this->count('media'),
         ];
+    }
+
+    private function countPosts(): int
+    {
+        // Tel alleen posts die NIET in de prullenbak zitten
+        $stmt = $this->pdo->query("SELECT COUNT(*) FROM posts WHERE deleted_at IS NULL");
+        return (int)$stmt->fetchColumn();
     }
 
     private function count(string $table): int

@@ -68,3 +68,4 @@ cache/
 # Temporary files
 tmp/
 temp/
+debug_counts.php

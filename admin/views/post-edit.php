@@ -5,7 +5,13 @@ use Admin\Core\Csrf;
 
 <section class="p-6">
     <div class="bg-white p-6 rounded shadow max-w-2xl">
-        <h1 class="text-2xl font-bold mb-4"><?= htmlspecialchars((string)($title ?? 'Post bewerken'), ENT_QUOTES) ?></h1>
+        <div class="flex justify-between items-center mb-4">
+            <h1 class="text-2xl font-bold"><?= htmlspecialchars((string)($title ?? 'Post bewerken'), ENT_QUOTES) ?></h1>
+            <a href="<?= ADMIN_BASE_PATH ?>/posts/<?= (int)($postId ?? 0) ?>/revisions" 
+               class="text-indigo-600 hover:text-indigo-900 border border-indigo-600 px-3 py-1 rounded text-sm bg-indigo-50 hover:bg-indigo-100">
+                🕒 Geschiedenis
+            </a>
+        </div>
 
         <?php require __DIR__ . '/partials/flash.php'; ?>
 

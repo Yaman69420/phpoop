@@ -9,6 +9,7 @@ use Admin\Core\View;
 use Admin\Repositories\MediaRepository;
 use Admin\Repositories\PostsRepository;
 use Admin\Services\LockService;
+use Admin\Services\RevisionService;
 
 final class PostsController
 {
@@ -228,6 +229,10 @@ final class PostsController
             exit;
         }
 
+        // REVISIES: Sla huidige post op als revisie voordat we updaten
+        $revisionService = new RevisionService();
+        $revisionService->createRevision($id, $post);
+
         // AANGEPAST: SEO velden meegeven aan repository
         $this->posts->update($id, $title, $content, $status, $featuredId, $publishedAt, $metaTitle, $metaDescription);
 
@@ -282,6 +287,72 @@ final class PostsController
             'title' => 'Post bekijken',
             'post' => $post,
         ]);
+    }
+
+    // NIEUW: Toon revisies van een post
+    public function revisions(int $id): void
+    {
+        $post = $this->posts->find($id);
+
+        if (!$post) {
+            Flash::set('error', 'Post niet gevonden.');
+            header('Location: ' . ADMIN_BASE_PATH . '/posts');
+            exit;
+        }
+
+        $revisionService = new RevisionService();
+        $revisions = $revisionService->getRevisionsForPost($id);
+
+        View::render('post-revisions.php', [
+            'title' => 'Revisies: ' . $post['title'],
+            'post' => $post,
+            'revisions' => $revisions,
+        ]);
+    }
+
+    // NIEUW: Bekijk een specifieke revisie
+    public function viewRevision(int $id, int $revisionId): void
+    {
+        $post = $this->posts->find($id);
+        
+        if (!$post) {
+            Flash::set('error', 'Post niet gevonden.');
+            header('Location: ' . ADMIN_BASE_PATH . '/posts');
+            exit;
+        }
+
+        $revisionService = new RevisionService();
+        $revision = $revisionService->getRevision($revisionId);
+
+        if (!$revision || (int)$revision['post_id'] !== $id) {
+            Flash::set('error', 'Revisie niet gevonden.');
+            header('Location: ' . ADMIN_BASE_PATH . '/posts/' . $id . '/revisions');
+            exit;
+        }
+
+        View::render('post-revision-view.php', [
+            'title' => 'Revisie bekijken: ' . $post['title'],
+            'post' => $post,
+            'revision' => $revision,
+        ]);
+    }
+
+    // NIEUW: Herstel een revisie (slug blijft behouden)
+    public function restoreRevision(int $id, int $revisionId): void
+    {
+        // SECURITY: CSRF Check
+        Csrf::check();
+
+        $revisionService = new RevisionService();
+        
+        if ($revisionService->restoreRevision($revisionId)) {
+            Flash::set('success', 'Post hersteld naar revisie.');
+        } else {
+            Flash::set('error', 'Kon revisie niet herstellen.');
+        }
+
+        header('Location: ' . ADMIN_BASE_PATH . '/posts/' . $id . '/edit');
+        exit;
     }
 
     private function normalizeFeaturedId(string $raw): ?int

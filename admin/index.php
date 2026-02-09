@@ -216,6 +216,19 @@ $router->post('/posts/{id}/update', function (int $id): void {
     (new PostsController(PostsRepository::make()))->update($id);
 });
 
+// NIEUW: Revisie Routes
+$router->get('/posts/{id}/revisions', function (int $id): void {
+    (new PostsController(PostsRepository::make()))->revisions($id);
+});
+
+$router->get('/posts/{id}/revisions/{revisionId}', function (int $id, int $revisionId): void {
+    (new PostsController(PostsRepository::make()))->viewRevision($id, $revisionId);
+});
+
+$router->post('/posts/{id}/revisions/{revisionId}/restore', function (int $id, int $revisionId): void {
+    (new PostsController(PostsRepository::make()))->restoreRevision($id, $revisionId);
+});
+
 /**
  * Delete routes (admin-only)
  * Let op: jij had hier al Auth::isAdmin checks.
