@@ -9,9 +9,19 @@ use Admin\Core\Csrf;
 
         <?php require __DIR__ . '/partials/flash.php'; ?>
 
+        <?php if (isset($lockRemainingMinutes) && $lockRemainingMinutes > 0): ?>
+        <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-4">
+            🔒 Je hebt een lock op deze post. Nog <strong><?= (int)$lockRemainingMinutes ?></strong> minuten geldig.
+        </div>
+        <?php endif; ?>
+
         <form method="post" action="<?= ADMIN_BASE_PATH ?>/posts/<?= (int)($postId ?? 0) ?>/update" class="space-y-4">
             <!-- CSRF Token -->
             <input type="hidden" name="csrf_token" value="<?= Csrf::getToken() ?>">
+            <!-- Lock Token (voor refresh detectie) -->
+            <?php if (isset($lockToken)): ?>
+            <input type="hidden" name="lock_token" value="<?= htmlspecialchars((string)$lockToken, ENT_QUOTES) ?>">
+            <?php endif; ?>
 
             <div>
                 <label class="block text-sm font-semibold mb-1">Titel</label>

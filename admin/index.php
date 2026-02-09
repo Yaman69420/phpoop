@@ -239,6 +239,7 @@ $router->post('/posts/{id}/delete', function (int $id) use ($requireAdmin): void
 $router->get('/posts/{id}', function (int $id): void {
     (new PostsController(PostsRepository::make()))->show($id);
 });
+
 /**
  * Media (admin-only)
  */

@@ -8,6 +8,7 @@ use Admin\Core\Flash;
 use Admin\Core\View;
 use Admin\Repositories\MediaRepository;
 use Admin\Repositories\PostsRepository;
+use Admin\Services\LockService;
 
 final class PostsController
 {
@@ -85,7 +86,6 @@ final class PostsController
         $status  = (string)($_POST['status'] ?? 'draft');
         $featuredRaw = trim((string)($_POST['featured_media_id'] ?? ''));
         $publishedAtRaw = trim((string)($_POST['published_at'] ?? ''));
-        // NIEUW: SEO velden ophalen
         $metaTitle = trim((string)($_POST['meta_title'] ?? '')) ?: null;
         $metaDescription = trim((string)($_POST['meta_description'] ?? '')) ?: null;
 
@@ -124,6 +124,21 @@ final class PostsController
             exit;
         }
 
+        // EDITORIAL LOCKING: Check en plaats lock
+        $lockService = new LockService();
+        $currentUserId = (int)$_SESSION['user_id'];
+
+        // Check of post gelocked is door een andere admin
+        if ($lockService->isLockedByOther($id, $currentUserId)) {
+            $lockedByName = $lockService->getLockedByName($id);
+            Flash::set('error', 'Deze post wordt momenteel bewerkt door ' . htmlspecialchars($lockedByName ?? 'een andere admin') . '.');
+            header('Location: ' . ADMIN_BASE_PATH . '/posts');
+            exit;
+        }
+
+        // Plaats of ververs de lock voor huidige admin
+        $lockService->acquireLock($id, $currentUserId);
+
         $old = Flash::get('old');
         if (!is_array($old)) {
             $old = [
@@ -138,12 +153,19 @@ final class PostsController
             ];
         }
 
+        // Haal lock info op voor de view
+        $lockInfo = $lockService->getLockInfo($id);
+        $lockRemainingMinutes = $lockInfo ? $lockService->getRemainingMinutes($lockInfo) : 0;
+        $lockToken = $lockInfo['locked_at'] ?? null;
+
         View::render('post-edit.php', [
             'title' => 'Post bewerken',
             'postId' => $id,
             'post' => $post,
             'old' => $old,
             'media' => MediaRepository::make()->getAllImages(),
+            'lockRemainingMinutes' => $lockRemainingMinutes,
+            'lockToken' => $lockToken,
         ]);
     }
 
@@ -156,6 +178,27 @@ final class PostsController
         if (!$post) {
             Flash::set('error', 'Post niet gevonden.');
             header('Location: ' . ADMIN_BASE_PATH . '/posts');
+            exit;
+        }
+
+        // EDITORIAL LOCKING: Controleer of huidige admin de lock heeft
+        $lockService = new LockService();
+        $currentUserId = (int)$_SESSION['user_id'];
+
+        if (!$lockService->isLockedByUser($id, $currentUserId)) {
+            Flash::set('error', 'Je kunt deze post niet opslaan. De lock is verlopen of je hebt geen lock.');
+            header('Location: ' . ADMIN_BASE_PATH . '/posts');
+            exit;
+        }
+
+        // REFRESH DETECTIE: Controleer of lock token matcht (voorkomt dubbele tabs/refresh)
+        $formLockToken = trim((string)($_POST['lock_token'] ?? ''));
+        $lockInfo = $lockService->getLockInfo($id);
+        $dbLockToken = $lockInfo['locked_at'] ?? '';
+
+        if ($formLockToken !== $dbLockToken) {
+            Flash::set('error', 'Deze bewerkingssessie is verlopen (pagina was ververst). Open de post opnieuw.');
+            header('Location: ' . ADMIN_BASE_PATH . '/posts/' . $id . '/edit');
             exit;
         }
 
@@ -187,6 +230,9 @@ final class PostsController
 
         // AANGEPAST: SEO velden meegeven aan repository
         $this->posts->update($id, $title, $content, $status, $featuredId, $publishedAt, $metaTitle, $metaDescription);
+
+        // EDITORIAL LOCKING: Lock vrijgeven na succesvol opslaan
+        $lockService->releaseLock($id);
 
         Flash::set('success', 'Post succesvol aangepast.');
         header('Location: ' . ADMIN_BASE_PATH . '/posts');
